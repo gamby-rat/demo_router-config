@@ -1,0 +1,39 @@
+- name: Configure routers 
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/ansible_input.yaml
+    - group_vars/ansible_input.yml  
+  tasks:
+    - name: Export inventory data
+      ansible.builtin.add_host:
+        name: "{{ item.ansible_host }}"
+        ansible_user: "{{ ansible_ssh_user }}"
+        ansible_password: "{{ ansible_ssh_password }}"
+        groups: routers
+      loop: "{{ routers }}"
+
+- name: Configure router
+  hosts: routers
+  gather_facts: no
+  tasks:
+    - name: Command output
+      ansible.builtin.debug:
+        msg: "Executing: {{ item.base_cmd }} {{ cmd }}"
+      loop: 
+        - { base_cmd: "/ip firewall address-list", commands: "{{ router_config.ip_firewall_address_list.commands }}" }
+        - { base_cmd: "/ip firewall mangle", commands: "{{ router_config.ip_firewall_mangle.commands }}" }
+      vars:
+        cmd: "{{ item.commands | join(' && ' ) }}"
+      loop_control:
+        label: "{{ inventory_hostname }} - {{ item.base_cmd }}"
+
+    - name: Configurate the routers
+      ansible.builtin.command: "{{ item.base_cmd }} {{ cmd }}"
+      loop: 
+        - { base_cmd: "/ip firewall address-list", commands: "{{ router_config.ip_firewall_address_list.commands }}" }
+        - { base_cmd: "/ip firewall mangle", commands: "{{ router_config.ip_firewall_mangle.commands }}" }
+      loop_control:
+        label: "{{ inventory_hostname }} - {{ item.base_cmd }}"
+      vars:
+        cmd: "{{ item.commands | join(' && ' ) }}"
