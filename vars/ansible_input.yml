@@ -1,0 +1,32 @@
+router_config:
+  ip_firewall_address_list:
+    base_cmd: /ip firewall address-list
+    commands:
+      - remove [find list="BOGONS"]
+      - add address=0.0.0.0/8 list=BOGONS
+      - add address=10.0.0.0/8 list=BOGONS
+      - add address=100.64.0.0/10 list=BOGONS
+      - add address=127.0.0.0/8 list=BOGONS
+      - add address=169.254.0.0/16 list=BOGONS
+      - add address=172.16.0.0/12 list=BOGONS
+      - add address=192.0.0.0/24 list=BOGONS
+      - add address=192.0.2.0/24 list=BOGONS
+      - add address=192.168.0.0/16 list=BOGONS
+      - add address=198.18.0.0/15 list=BOGONS
+      - add address=198.51.100.0/24 list=BOGONS
+      - add address=203.0.113.0/24 list=BOGONS
+      - add address=224.0.0.0/3 list=BOGONS
+  ip_firewall_mangle:
+    base_cmd: /ip firewall mangle
+    commands:
+      - remove [find list="BOGONS"]
+      - add action=jump chain=output content="invalid user name or password"
+        jump-target=FB-WB protocol=tcp src-port=8291
+      - add action=add-dst-to-address-list address-list=FB-WB-BAN
+        address-list-timeout=1d chain=FB-WB dst-address-list=FB-WB-3
+      - add action=add-dst-to-address-list address-list=FB-WB-3 address-list-timeout=
+        1m chain=FB-WB dst-address-list=FB-WB-2
+      - add action=add-dst-to-address-list address-list=FB-WB-2 address-list-timeout=
+        1m chain=FB-WB dst-address-list=FB-WB-1
+      - add action=add-dst-to-address-list address-list=FB-WB-1 address-list-timeout=
+        1m chain=FB-WB
